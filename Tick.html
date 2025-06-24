@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elite Tick Detector</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    #tick-time,
+    #tick-elapsed {
+      font-size: 1.3rem;
+      background-color: #1e1e1e;
+      padding: 1rem 2rem;
+      margin: 0.5rem 0;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+
+    .label {
+      font-weight: bold;
+      color: #bbbbbb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Last Elite Tick</h1>
+  <div id="tick-time"><span class="label">Tick time:</span> Waiting...</div>
+  <div id="tick-elapsed"><span class="label">Time since:</span> Waiting...</div>
+
+  <script>
+    let lastTickDate = null;
+
+    function formatDate(isoString) {
+      const date = new Date(isoString);
+      return date.toLocaleString(undefined, {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+    }
+
+    function getTimeSince(date) {
+      const now = new Date();
+      const diff = Math.floor((now - date) / 1000); // seconds
+
+      const hours = Math.floor(diff / 3600);
+      const minutes = Math.floor((diff % 3600) / 60);
+      const seconds = diff % 60;
+
+      return `${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    function updateElapsedTime() {
+      if (lastTickDate) {
+        document.getElementById('tick-elapsed').innerHTML =
+          `<span class="label">Time since:</span> ${getTimeSince(lastTickDate)}`;
+      }
+    }
+
+    const socket = io();
+
+    socket.on('message', (data) => {
+      lastTickDate = new Date(data);
+      document.getElementById('tick-time').innerHTML =
+        `<span class="label">Tick time:</span> ${formatDate(lastTickDate)}`;
+      updateElapsedTime();
+    });
+
+    socket.on('tick', (data) => {
+      lastTickDate = new Date(data);
+      alert(`New tick: ${formatDate(lastTickDate)}`);
+      document.getElementById('tick-time').innerHTML =
+        `<span class="label">Tick time:</span> ${formatDate(lastTickDate)}`;
+      updateElapsedTime();
+    });
+
+    // Update elapsed time every second
+    setInterval(updateElapsedTime, 1000);
+  </script>
+</body>
+</html>
