@@ -79,7 +79,7 @@
       }
     }
 
-    const socket = io();
+    const socket = io("https://tick.edcd.io");
 
     socket.on('message', (data) => {
       lastTickDate = new Date(data);
